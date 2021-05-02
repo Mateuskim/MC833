@@ -6,3 +6,4 @@ List users by graduation year.
 List all users.
 Search user.
 Remove user.
+Exit.

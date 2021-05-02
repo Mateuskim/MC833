@@ -3,7 +3,7 @@
 
 /*Number of items in menu*/
 #define MAXSIZE 10
-#define MAXCHAR 1000
+#define MAXCHAR 1024
 
 typedef struct _User {
 	char *id;
