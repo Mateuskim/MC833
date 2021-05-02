@@ -3,31 +3,30 @@
 #include <string.h>
 #include "users.h"
 
-/*
- * Function:  addUser 
- * --------------------
- * add new user into the database
- * 
- * arguments:
- *  email: self-explanatory
- *  firstName: self-explanatory
- *  lastName: self-explanatory
- *  city: self-explanatory
- *  course: self-explanatory
- *  year: self-explanatory
- *  nSkills: number of skills of the user
- *  skills: array of string with skills of the user
- *  nExperiences: number of experience of the user
- *  experiences: array of experiences with skills of the user
- *
- */
+int lookForUser(char* email, User** users){
+
+    // Auxiliar variable
+    int i;
+    // Variable to store number of users registered
+    int numberOfUsers = getNumberOfUsers();
+    // Looking for user
+    for (i = 0 ; i < numberOfUsers ; i++){
+        if(strcmp(users[i]->email, email) == 0){
+            return users[i]->root;
+        }
+    }
+
+    // If there is no user with that email
+    return -1;
+}
+
 int addUser(char* email, char* firstName, char* lastName, char* city,\
             char* course, char* year, int nSkills, char** skills,\
             int nExperiences, char** experiences){
     
     // Auxiliar variable
     int i;
-    char fileName[MAXCHAR];
+    char fileName[MAXLINE];
     FILE *fp;
 
     // Variable to store number of users registered
@@ -80,23 +79,11 @@ int addUser(char* email, char* firstName, char* lastName, char* city,\
     return 1;
 }
 
-/*
- * Function:  addExperience 
- * --------------------
- * add new experience to user
- * 
- *  user: usert structure to where new experience will be added
- *  experience: experience to be added
- *  
- * returns:
- * 		0 - if add experience failed
- * 		1 - if experience added successfully
- */
 int addExperience(User* user, char* experience){
 
     // Auxiliar variable
     int i;
-    char fileName[MAXCHAR];
+    char fileName[MAXLINE];
     FILE *fp;
 
     // Variable to store new number of experiences
@@ -143,23 +130,11 @@ int addExperience(User* user, char* experience){
     return 1;
 }
 
-/*
- * Function:  removeUser 
- * --------------------
- * remove user from the database
- * 
- *  id: id of the file where the user has been stored
- *  
- * returns:
- * 		0 -  user remove failed
- * 		1 - if user removed successfully
- */
-
 int removeUser(int id){
 
     // Auxiliar variable
     int numberOfUsers;
-    char fileName[MAXCHAR];
+    char fileName[MAXLINE];
     FILE *fp;
 
     // variable to store result of file removed.
@@ -194,83 +169,46 @@ int removeUser(int id){
     
 }
 
-/*
- * Function:  getNumberOfUsers 
- * --------------------
- * count number of users registered 
- * 
- * returns:
- * 		- number of users registered  
- */
 int getNumberOfUsers(){
     int numberOfFiles;
-    char str[MAXCHAR];
+    char str[MAXLINE];
 
     FILE *fp = fopen("users/numberofusers.txt", "rb");
-    fgets(str, MAXCHAR, fp);
+    fgets(str, MAXLINE, fp);
 
     numberOfFiles =  *str - '0';
     return numberOfFiles;
 }
 
 
-/*
- * Function:  initUser 
- * --------------------
- * initialization of user structure fields
- *  
- *  user : User structure 
- */
 void initUser(User* user){
-    user->id = malloc(MAXCHAR * sizeof(char));
-    user->email = malloc(MAXCHAR * sizeof(char));
-    user->firstName = malloc(MAXCHAR * sizeof(char));
-    user->lastName = malloc(MAXCHAR * sizeof(char));
-    user->city = malloc(MAXCHAR * sizeof(char));
-    user->course = malloc(MAXCHAR * sizeof(char));
-    user->year = malloc(MAXCHAR * sizeof(char));
+    user->id = malloc(MAXLINE * sizeof(char));
+    user->email = malloc(MAXLINE * sizeof(char));
+    user->firstName = malloc(MAXLINE * sizeof(char));
+    user->lastName = malloc(MAXLINE * sizeof(char));
+    user->city = malloc(MAXLINE * sizeof(char));
+    user->course = malloc(MAXLINE * sizeof(char));
+    user->year = malloc(MAXLINE * sizeof(char));
 }
 
-/*
- * Function:  initSkills 
- * --------------------
- * initialization of skill user structure fields
- *  
- *  user : User structure 
- */
 void initSkills(User* user){
     int i ;
     user->skills = malloc(user->nSkills * sizeof(char*));
     for(i = 0; i < user->nSkills; i++){
-        user->skills[i] = malloc(MAXCHAR * sizeof(char));
+        user->skills[i] = malloc(MAXLINE * sizeof(char));
     }
 }
 
-/*
- * Function:  initExperiences 
- * --------------------
- * initialization of experiences user structure fields
- *  
- *  user : User structure 
- */
 void initExperiences(User* user){
     int i ;
     user->experiences = malloc(user->nExperiences * sizeof(char*));
     for(i = 0; i < user->nExperiences; i++){
-        user->experiences[i] = malloc(MAXCHAR * sizeof(char));
+        user->experiences[i] = malloc(MAXLINE * sizeof(char));
     }
 }
 
-/*
- * Function:  loadUserInfo 
- * --------------------
- * load info of the user
- *  
- *  user : User structure where the info will be stored
- *  fileName :  file path where the info is stored
- */
 void loadUserInfo(User* user, char* fileName){
-    char str[MAXCHAR];
+    char str[MAXLINE];
     int nSkills, nExperiences;
     int i ;
 
@@ -282,12 +220,12 @@ void loadUserInfo(User* user, char* fileName){
         return;
     }
     // id
-    fgets(str, MAXCHAR, fp);
+    fgets(str, MAXLINE, fp);
     str[strcspn(str, "\n")] = 0;
     strcpy(user->id, str);
 
     // email
-    fgets(str, MAXCHAR, fp);
+    fgets(str, MAXLINE, fp);
     str[strcspn(str, "\n")] = 0;
     strcpy(user->email, str);
 
@@ -300,49 +238,48 @@ void loadUserInfo(User* user, char* fileName){
     strcpy(user->lastName, str);
 
     // city
-    fgets(str, MAXCHAR, fp);
+    fgets(str, MAXLINE, fp);
     str[strcspn(str, "\n")] = 0;
     strcpy(user->city, str);
 
     // course
-    fgets(str, MAXCHAR, fp);
+    fgets(str, MAXLINE, fp);
     str[strcspn(str, "\n")] = 0;
     strcpy(user->course, str);
 
     // year
-    fgets(str, MAXCHAR, fp);
+    fgets(str, MAXLINE, fp);
     str[strcspn(str, "\n")] = 0;
     strcpy(user->year, str);
 
     // skills
-    fgets(str, MAXCHAR, fp);
+    fgets(str, MAXLINE, fp);
     str[strcspn(str, "\n")] = 0;
     user->nSkills = *str - '0';
     initSkills(user);
 
     // Iterating through user skills
     for(i = 0 ; i < user->nSkills; i++){
-        fgets(str, MAXCHAR, fp);
+        fgets(str, MAXLINE, fp);
         str[strcspn(str, "\n")] = 0;
         strcpy(user->skills[i], str);
     }
 
-
     // experiences
-    fgets(str, MAXCHAR, fp);
+    fgets(str, MAXLINE, fp);
     str[strcspn(str, "\n")] = 0;
     user->nExperiences = *str - '0'; 
     initExperiences(user);
 
     // Iterating through user experiences
     for(i = 0 ; i < user->nExperiences; i++){
-        fgets(str, MAXCHAR, fp);
+        fgets(str, MAXLINE, fp);
         str[strcspn(str, "\n")] = 0;
         strcpy(user->experiences[i], str);
     }
 
     // root
-    fgets(str, MAXCHAR, fp);
+    fgets(str, MAXLINE, fp);
     str[strcspn(str, "\n")] = 0;
     user->root = *str - '0';
 
@@ -350,16 +287,6 @@ void loadUserInfo(User* user, char* fileName){
 
 }
 
-/*
- * Function:  initUsers 
- * --------------------
- * init array of users structures 
- *  
- *  nUsers : number of users to initiazate
- * 
- *  returns:
- *        users:  an user structure where the fields are initialized
- */
 User** initUsers(int nUsers){
     int i;
     User** users = malloc(nUsers * sizeof(User*));
@@ -371,18 +298,10 @@ User** initUsers(int nUsers){
     return users;
 }
 
-/*
- * Function:  loadUsers 
- * --------------------
- * load all users registred
- *  
- * returns: 
- *      users : array of User where all the users strutures are stored
- */
 User** loadUsers(){
 
     // Variable to store the file name path
-    char fileName[MAXCHAR];
+    char fileName[MAXLINE];
     int i, nUsers = getNumberOfUsers();
     User** users;
 

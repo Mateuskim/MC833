@@ -21,7 +21,7 @@
  */
 void sendToServer(int clientSocket, char* buffer){
 	// Auxiliar variables
-	send(clientSocket, buffer, MAXLINE, 0);
+	write(clientSocket, buffer, MAXLINE);
 }
 
 /*
@@ -108,7 +108,6 @@ int loginIntoServer(int clientSocket){
 	printf("[+] Email:");
 	sendToAndReadFromServer(clientSocket, buffer);
 	answer = atoi(buffer);
-
 	printf("\n=============== Response =====================\n");
 	if(answer>=0){
 		printf("Login Successfully!");
@@ -163,7 +162,8 @@ void listUsersByCourse(int clientSocket){
 	// Variable to store number of users found on the search
 	int numberOfUsers;
 	
-	printf("Listing users by course.\nCourse:");
+	printf("Listing users by course.\n");
+	printf("Course:");
 	sendToAndReadFromServer(clientSocket, buffer);
 
 	// Buffer returns number of users found
@@ -174,8 +174,11 @@ void listUsersByCourse(int clientSocket){
 		printf("\nNumber of users found:%d\n", numberOfUsers);
 		// Receiving and printing users
 		for (i = 0; i < numberOfUsers; i++){
+			// email
 			readFromServer(clientSocket, buffer);
 			printf("%s\n", buffer);
+
+			// name
 			readFromServer(clientSocket, buffer);
 			printf("%s\n", buffer);
 		}
@@ -218,13 +221,17 @@ void listUsersBySkill(int clientSocket){
 		printf("\nNumber of users found:%d\n", numberOfUsers);
 		// Receiving and printing users
 		for (i = 0; i < numberOfUsers; i++){
+			// email
 			readFromServer(clientSocket, buffer);
 			printf("%s\n", buffer);
+
+			// name
 			readFromServer(clientSocket, buffer);
 			printf("%s\n", buffer);
+
+			// skill
 			readFromServer(clientSocket, buffer);
-			printf("%s\n", buffer);
-			printf("\n");
+			printf("%s\n\n", buffer);
 		}
 	}else{
 		printf("No user found for this skill!\n");
@@ -253,7 +260,7 @@ void listUsersByYear(int clientSocket){
 	// Variable to store number of users found on the search
 	int numberOfUsers;
 		
-	printf("Listing users by Skill.\n");
+	printf("Listing users by year.\n");
 	printf("Graduation year:");
 	sendToAndReadFromServer(clientSocket, buffer);
 
@@ -265,8 +272,12 @@ void listUsersByYear(int clientSocket){
 		printf("\nNumber of users found:%d\n", numberOfUsers);
 		// Receiving and printing users
 		for (i = 0; i < numberOfUsers; i++){
+
+			// email
 			readFromServer(clientSocket, buffer);
 			printf("%s\n", buffer);
+
+			// name
 			readFromServer(clientSocket, buffer);
 			printf("%s\n", buffer);
 		}
@@ -289,10 +300,13 @@ void listUsers(int clientSocket){
 
 	// Auxiliar variables
 	char buffer[MAXLINE];
-	int i;
+	int i,j;
 
 	// Variable to store number of users
 	int numberOfUsers;
+	
+	// Variable to store number of skills/experiences
+	int n;
 	
 	printf("Listing all Users.\n");
 	readFromServer(clientSocket, buffer);
@@ -305,10 +319,47 @@ void listUsers(int clientSocket){
 		printf("\nNumber of users found:%d\n", numberOfUsers);
 		// Receiving and printing users
 		for (i = 0; i < numberOfUsers; i++){
+			
+			// Reading email
 			readFromServer(clientSocket, buffer);
 			printf("%s\n", buffer);
+			
+			// Reading name
 			readFromServer(clientSocket, buffer);
 			printf("%s\n", buffer);
+
+			// Reading city
+			readFromServer(clientSocket, buffer);
+			printf("%s\n", buffer);
+
+			// Reading course
+			readFromServer(clientSocket, buffer);
+			printf("%s\n", buffer);
+			
+			// Reading year of graduation
+			readFromServer(clientSocket, buffer);
+			printf("%s\n", buffer);
+
+
+			// Reading number of skills
+			readFromServer(clientSocket, buffer);
+
+			n = atoi(buffer);
+			for(j = 0 ; j < n ; j++){
+				// Reading skills
+				readFromServer(clientSocket, buffer);
+				printf("%s\n", buffer);
+			}
+
+			// Reading number of experiences
+			readFromServer(clientSocket, buffer);
+			n = atoi(buffer);
+			for(j = 0 ; j < n ; j++){
+				// Reading experiences
+				readFromServer(clientSocket, buffer);
+				printf("%s\n", buffer);
+			}
+
 		}
 	}else{
 		printf("No user found!\n");
@@ -335,7 +386,8 @@ void listUserByEmail(int clientSocket){
 	int numberOfUsers;
 	
 	// Getting response from server
-	printf("Showing info of user by email.\nEmail:");
+	printf("Showing info of user by email.\n");
+	printf("Email:");
 	sendToAndReadFromServer(clientSocket, buffer);
 
 	// Buffer returns number of users found
@@ -449,16 +501,13 @@ void addExperienceUser(int clientSocket){
 	// Variable to store number of users
 	int numberOfUsers;
 
-
+	// read email
 	printf("Adding experience in User.\nEmail:");
 	sendToAndReadFromServer(clientSocket, buffer);
 	
 	// Buffer returns number of users found
 	numberOfUsers = atoi(buffer);
 
-
-
-	
 	if(numberOfUsers){
 			// Getting skill to be added
 		printf("\nSkill to add:");	
@@ -508,7 +557,6 @@ void addNewUser(int clientSocket){
 	// Getting number of users found
 	readFromServer(clientSocket, buffer);
 	numberOfUsers = atoi(buffer);
-	printf("number:%s\n", buffer);
 	
 	// If doesn't exists user with email
 	if(!numberOfUsers){
@@ -566,6 +614,8 @@ void addNewUser(int clientSocket){
  *
  */
 void executeCommand(int clientSocket, int user, int command){
+
+
     if(user == 1){
         switch(command){
             case 1:
@@ -641,17 +691,14 @@ void startService( int clientSocket, int user){
 	bzero(buffer, MAXLINE);
 
 	// loop to client iterate through commands
-	do{
-
+	while(1){
 		gettingMenuFromServer(clientSocket);
 		// Get action to be executed [1-8] and send to server
 		fgets(buffer, MAXLINE, stdin);
 		sendToServer(clientSocket, buffer);
 		command = atoi(buffer);
 		executeCommand(clientSocket, user, command);
-
-	}while(1);
-
+	}
 }
 
 void main(){
@@ -664,7 +711,7 @@ void main(){
 	int user;
 
 	// socket create and verification
-	clientSocket = socket(PF_INET, SOCK_STREAM, 0);
+	clientSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if(clientSocket<0){
 		printf("[-] Fail to create the Socket\n");
 		return;
@@ -679,7 +726,8 @@ void main(){
 	serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 	// connect the client socket to server socket
-	if(connect(clientSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr))<0){
+	if(connect(clientSocket, (struct sockaddr *) &serverAddr, \
+	           sizeof(serverAddr))<0){
 		perror("[-] Connection Error");
 		// close(clientSocket);
 		exit(EXIT_FAILURE);

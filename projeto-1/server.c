@@ -10,7 +10,6 @@
 #include "users.h"
 
 #define PORT 8080
-#define MAXLINE 1024
 #define MAX 10
 #define ROOTMENUSIZE "9"
 #define USERMENUSIZE "6"
@@ -44,7 +43,7 @@ void receiveFromClient(int connfd, char* buffer){
  *
  */
 void sendMessageToClient(int connfd, char msg[MAXLINE]){
-    send(connfd, msg, MAXLINE, 0);
+    write(connfd, msg, MAXLINE);
 }
 
 /*
@@ -62,32 +61,6 @@ void sendIntToClient(int connfd, int n){
     sendMessageToClient(connfd, buffer);
 }
 
-
-/*
- * Function:  lookForUser 
- * --------------------
- * look up user by email
- * 
- *  email: email to be search
- *  users: structure of users to look up
- *
- */
-int lookForUser(char* email, User** users){
-
-    // Auxiliar variable
-    int i;
-    // Variable to store number of users registered
-    int numberOfUsers = getNumberOfUsers();
-    // Looking for user
-    for (i = 0 ; i < numberOfUsers ; i++){
-        if(strcmp(users[i]->email, email) == 0){
-            return users[i]->root;
-        }
-    }
-
-    // If there is no user with that email
-    return -1;
-}
 
 /*
  * Function:  login 
@@ -149,7 +122,7 @@ void sendMenuToClient(int connfd, int user){
     }
     
     // Sending items of menu store in menu/menu.txt
-    while (fgets(menuItem, MAXCHAR, fp) != NULL)
+    while (fgets(menuItem, MAXLINE, fp) != NULL)
         send(connfd, menuItem, MAXLINE, 0);
     fclose(fp);
     
@@ -165,8 +138,12 @@ void sendMenuToClient(int connfd, int user){
  */
 void listUsersByCourse(int connfd){
 
+    // Auxiliar variable
     int i;
-    char buffer[MAXLINE],  course[MAXLINE];
+    char buffer[MAXLINE];
+
+    // Variable to store 
+    char  course[MAXLINE];
     User** users = loadUsers();
     int numberOfUsers = getNumberOfUsers();
     int usersFound = 0;
@@ -320,7 +297,7 @@ void listUsersBySkill(int connfd){
  */
 void listUsers(int connfd){
 
-    int i;
+    int i, j;
     char buffer[MAXLINE];
     User** users = loadUsers();
     int numberOfUsers = getNumberOfUsers();
@@ -329,12 +306,49 @@ void listUsers(int connfd){
     sendIntToClient(connfd, numberOfUsers);
     if(numberOfUsers)
         for(i = 0; i < numberOfUsers; i++){
+            
+            // Sending email
             snprintf(buffer, MAXLINE, "\n--User %d--\nEmail: %s",i+1, \
                                                         users[i]->email);
             sendMessageToClient(connfd, buffer);
-            snprintf(buffer, MAXLINE, "Name: %s %s\n", users[i]->firstName, \
-                                                        users[i]->lastName);
+
+            // Sending name
+            snprintf(buffer, MAXLINE, "Name: %s %s", users[i]->firstName, \
+                                                     users[i]->lastName);
             sendMessageToClient(connfd, buffer);
+
+            // Sending city
+            snprintf(buffer, MAXLINE, "City: %s", users[i]->city);
+            sendMessageToClient(connfd, buffer);
+
+            // Sending course
+            snprintf(buffer, MAXLINE, "Course: %s", users[i]->course);
+            sendMessageToClient(connfd, buffer);
+            
+            // Sending year of graduation
+            snprintf(buffer, MAXLINE, "Graduation year: %s", users[i]->year);
+            sendMessageToClient(connfd, buffer);
+
+
+            // Sending number of skills
+            snprintf(buffer, MAXLINE, "%d", users[i]->nSkills);
+            sendMessageToClient(connfd, buffer);
+
+            // Sending skills
+            for(j = 0 ; j < users[i]->nSkills; j++){
+                snprintf(buffer, MAXLINE, "Skill %d: %s",j+1, users[i]->skills[j]);
+                sendMessageToClient(connfd, buffer);
+            }
+
+            // Sending number of experiences
+            snprintf(buffer, MAXLINE, "%d", users[i]->nExperiences);
+            sendMessageToClient(connfd, buffer);
+            
+            // Sending experiences
+            for(j = 0 ; j < users[i]->nExperiences; j++){
+                snprintf(buffer, MAXLINE, "Experience %d: %s",j+1, users[i]->experiences[j]);
+                sendMessageToClient(connfd, buffer);
+            }
         }
 
 }
@@ -608,6 +622,8 @@ void addNewUser(int connfd){
 void executeCommand(int connfd, int user, int command){
 
     // Root User
+
+ 
     if(user == 1){
         switch(command){
             case 1:
@@ -700,7 +716,7 @@ void startService( int connfd, int user){
         printf("[+] An user has logged in!\n");
     }
 
-    do{
+    while(1){
         sendMenuToClient(connfd, user);
         // Receiving action to be executed
         if (recv(connfd, buffer, MAXLINE,0) == 0){
@@ -710,22 +726,21 @@ void startService( int connfd, int user){
         }
         command = atoi(buffer);
         executeCommand(connfd, user, command);
-    }while(1);
+    }
+
 }
 
 int main(){
+
+    // socket to connect to client
     int connfd = 0;
     pid_t pid;
 
+    // variable to store if client is admin or not. 
     int user_login;
 
     struct sockaddr_in address;
-    // assign IP, PORT
-    address.sin_addr.s_addr = htonl(INADDR_ANY);
-    address.sin_port = htons(PORT);
-    address.sin_family = AF_INET;
 
-    int address_len = sizeof(address);
 
     // socket create and verification
     int sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -736,6 +751,12 @@ int main(){
         printf("[+] Socket creation success!\n");
     }
 
+    // assign IP, PORT
+    address.sin_addr.s_addr = htonl(INADDR_ANY);
+    address.sin_port = htons(PORT);
+    address.sin_family = AF_INET;
+
+    int address_len = sizeof(address);
     // bind
     int server_bind = bind(sockfd, (struct sockaddr *)&address, sizeof(address));
     if (server_bind) {
@@ -769,15 +790,10 @@ int main(){
             close(listening); /* child closes listening socket */
 
             user_login = login(connfd);
+            sendIntToClient(connfd, user_login);
 
-            if(user_login >= 0){
-                // User Found!
-                send(connfd, "1", MAXLINE, 0);
-                
+            if(user_login >= 0)
                 startService(connfd, user_login);
-            }else{
-                send(connfd, "-1", MAXLINE, 0);
-            }
 
             close(connfd);
             exit(0); //child terminates
