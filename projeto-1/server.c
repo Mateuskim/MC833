@@ -128,6 +128,24 @@ void sendMenuToClient(int connfd, int user){
     
 }
 
+
+/*
+ * Function:  toUpperCase 
+ * --------------------
+ * uppercase str
+ * 
+ *  str: string to uppercase
+ *
+ */
+void toUpperCase(char *str){
+    while(*str) 
+    {
+        *str = (*str >= 'a' && *str <= 'z') ? *str-32 : *str;
+        str++;
+    }
+}
+
+
 /*
  * Function:  listUsersByCourse 
  * --------------------
@@ -152,7 +170,9 @@ void listUsersByCourse(int connfd){
     receiveFromClient(connfd, buffer);
     
     strcpy(course, buffer);
+    toUpperCase(course);
     for(i = 0; i < numberOfUsers; i++){
+        toUpperCase(users[i]->course);
         if(strcmp(users[i]->course, course) == 0)
             usersFound += 1;
     }
@@ -206,22 +226,6 @@ void listUsersByYear(int connfd){
 }
 
 /*
- * Function:  toUpperCase 
- * --------------------
- * uppercase str
- * 
- *  str: string to uppercase
- *
- */
-void toUpperCase(char *str){
-    while(*str) 
-    {
-        *str = (*str >= 'a' && *str <= 'z') ? *str-32 : *str;
-        str++;
-    }
-}
-
-/*
  * Function:  listUsersBySkill 
  * --------------------
  * get list of users by skill and send it to client
@@ -253,8 +257,6 @@ void listUsersBySkill(int connfd){
 
             if(strstr(users[i]->skills[j], skill) != NULL){
                 usersFound += 1;
-                printf("%s %s\n\n", users[i]->skills[j], skill);
-
                 break;
             }
                 
